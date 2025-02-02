@@ -16,8 +16,8 @@ class DataLogger:
         self.csv_file = open(self.filename, "w", newline='')
         self.csv_writer = csv.writer(self.csv_file)
         
-        # プロット用のデータリストを初期化
-        self.dataLists = [[] for _ in range(6)]  # 6つのデータ系列用
+        # プロット用のデータリストを初期化（時間は含めない）
+        self.dataLists = [[] for _ in range(6)]  # センサデータ用の6つのリスト
         
         # キューの初期化
         self.data_queue = Queue(maxsize=100)  # キューサイズを制限
@@ -60,13 +60,11 @@ class DataLogger:
                 data_string = self.ser.readline().decode('ascii').strip()
                 if data_string:
                     data_values = [float(x) for x in data_string.split(',')]
-                    if len(data_values) == 6:
+                    if len(data_values) == 7:  # 時間 + 6つのセンサデータ
                         print(f"受信データ: {data_string}")
-                        self.csv_writer.writerow(data_values)
-                        # キューが一杯の場合は古いデータを捨てる
-                        if self.data_queue.full():
-                            self.data_queue.get()
-                        self.data_queue.put(data_values)
+                        self.csv_writer.writerow(data_values)  # 全データを保存
+                        # キューには時間以外のデータを送信
+                        self.data_queue.put(data_values[1:])  # インデックス1以降のデータ
                     else:
                         print(f"不正なデータ形式: {data_string}")
             except Exception as e:
@@ -77,7 +75,7 @@ class DataLogger:
         """プロットを更新する関数"""
         try:
             if not self.data_queue.empty():
-                data_values = self.data_queue.get()
+                data_values = self.data_queue.get()  # センサデータのみ（時間は含まない）
                 
                 # データの追加
                 for idx, value in enumerate(data_values):
@@ -89,7 +87,7 @@ class DataLogger:
                 self.ax1.clear()
                 self.ax2.clear()
                 
-                # 加速度データのプロット
+                # 加速度データのプロット（インデックス0-2）
                 self.ax1.plot(self.dataLists[0], 'r-', label='Accel_x')
                 self.ax1.plot(self.dataLists[1], 'g-', label='Accel_y')
                 self.ax1.plot(self.dataLists[2], 'b-', label='Accel_z')
@@ -98,7 +96,7 @@ class DataLogger:
                 self.ax1.set_ylabel("g")
                 self.ax1.legend()
                 
-                # ジャイロデータのプロット
+                # ジャイロデータのプロット（インデックス3-5）
                 self.ax2.plot(self.dataLists[3], 'c-', label='Gyro_x')
                 self.ax2.plot(self.dataLists[4], 'm-', label='Gyro_y')
                 self.ax2.plot(self.dataLists[5], 'y-', label='Gyro_z')
