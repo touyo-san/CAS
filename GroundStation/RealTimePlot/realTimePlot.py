@@ -1,6 +1,6 @@
 # https://github.com/WaveShapePlay/Arduino_RealTimePlot
-# Modified to plot three variables from Arduino in a single graph
-# Data format expected from Arduino: "value1,value2,value3" (comma-separated values)
+# Modified to plot six variables from Arduino in two subplots
+# Data format expected from Arduino: "value1,value2,value3,value4,value5,value6" (comma-separated values)
 
 import time
 import serial
@@ -13,7 +13,7 @@ def animate(i, dataLists, ser):
     #print(arduinoData_string)                          # Debug print
 
     try:
-        # Split the incoming data into three values
+        # Split the incoming data into six values
         data_values = [float(x) for x in arduinoData_string.split(',')]
         
         # Append each value to its respective list
@@ -24,23 +24,38 @@ def animate(i, dataLists, ser):
     except:                                             # Pass if data point is bad                               
         pass
     
-    ax.clear()                                          # Clear last data frame
+    # Clear both subplots
+    ax1.clear()                                         
+    ax2.clear()                                         
     
-    # Plot all three variables with different colors and labels
-    ax.plot(dataLists[0], 'r-', label='Variable 1')
-    ax.plot(dataLists[1], 'g-', label='Variable 2')
-    ax.plot(dataLists[2], 'b-', label='Variable 3')
+    # Plot first three variables in first subplot
+    ax1.plot(dataLists[0], 'r-', label='Accel_x')
+    ax1.plot(dataLists[1], 'g-', label='Accel_y')
+    ax1.plot(dataLists[2], 'b-', label='Accel_z')
     
-    ax.set_ylim([0, 10])                               # Set Y axis limit of plot
-    ax.set_title("Arduino Data")                        # Set title of figure
-    ax.set_ylabel("Value")                              # Set title of y axis
-    ax.legend()                                         # Show legend
+    # Plot next three variables in second subplot
+    ax2.plot(dataLists[3], 'c-', label='Gyro_x')
+    ax2.plot(dataLists[4], 'm-', label='Gyro_y')
+    ax2.plot(dataLists[5], 'y-', label='Gyro_z')
+    
+    # Configure first subplot
+    ax1.set_ylim([-5, 5])   # Acceleration range of Nano 33 Iot is set at -4|4 g                              
+    ax1.set_title("Arduino Data - Acceleration")             
+    ax1.set_ylabel("Acceleration [g]")                             
+    ax1.legend()                                        
 
-# Initialize three empty lists for the three variables
-dataLists = [[], [], []]
+    # Configure second subplot
+    ax2.set_ylim([-2500, 2500])   # Gyroscope range of Nano 33 Iot is set at -2000|2000 dps                              
+    ax2.set_title("Arduino Data - Gyroscope")             
+    ax2.set_ylabel("Angular Velocity [dps]")                             
+    ax2.legend()                                        
 
-fig = plt.figure()                                      # Create Matplotlib plots fig is the 'higher level' plot window
-ax = fig.add_subplot(111)                               # Add subplot to main fig window
+# Initialize six empty lists for the six variables
+dataLists = [[], [], [], [], [], []]
+
+fig = plt.figure(figsize=(12, 5))                       # Create wider figure for side-by-side plots
+ax1 = fig.add_subplot(121)                              # Add first subplot (left side)
+ax2 = fig.add_subplot(122)                              # Add second subplot (right side)
 
 ser = serial.Serial("COM3", 9600)                       # Establish Serial object with COM port and BAUD rate to match Arduino Port/rate
 time.sleep(2)                                           # Time delay for Arduino Serial initialization 
@@ -49,5 +64,6 @@ time.sleep(2)                                           # Time delay for Arduino
                                                         # Note that 'fargs' parameter is where we pass in our dataLists and Serial object. 
 ani = animation.FuncAnimation(fig, animate, frames=100, fargs=(dataLists, ser), interval=100) 
 
-plt.show()                                              # Keep Matplotlib plot persistent on screen until it is closed
-ser.close()                                             # Close Serial connection when plot is closed
+plt.tight_layout(pad=3.0)                               # Increase padding between subplots
+plt.show()                                              
+ser.close()                                             

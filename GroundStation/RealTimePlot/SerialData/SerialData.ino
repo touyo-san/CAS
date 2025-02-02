@@ -30,11 +30,11 @@ if(Serial.available()> 0){
               // シリアルモニターにデータを出力
               // Serial.print(millis() / 1000.0, 2); // 経過時間 (秒)
               // Serial.print(", ");
-              // Serial.print(ax, 2); Serial.print(", ");
-              // Serial.print(ay, 2); Serial.print(", ");
-              // Serial.print(az, 2); Serial.print(", ");
-              // Serial.print(gx, 2); Serial.print(", ");
-              // Serial.print(gy, 2); Serial.print(", ");
+              Serial.print(ax, 2); Serial.print(", ");
+              Serial.print(ay, 2); Serial.print(", ");
+              Serial.print(az, 2); Serial.print(", ");
+              Serial.print(gx, 2); Serial.print(", ");
+              Serial.print(gy, 2); Serial.print(", ");
               Serial.println(az, 2);
             }
       } // if user input 'g' 
